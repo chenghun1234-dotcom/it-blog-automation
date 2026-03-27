@@ -1,4 +1,5 @@
 import { promises as fs } from 'fs';
+import { existsSync } from 'fs';
 import path from 'path';
 
 export interface BlogPost {
@@ -9,7 +10,22 @@ export interface BlogPost {
   createdAt: string;
 }
 
-const POSTS_DIR = path.join(process.cwd(), 'src', 'posts');
+function resolvePostsDir(): string {
+  const cwd = process.cwd();
+  const candidates = [
+    path.join(cwd, 'src', 'posts'),
+    path.join(cwd, 'it-guide', 'src', 'posts'),
+  ];
+
+  const found = candidates.find((dir) => existsSync(dir));
+  return found ?? candidates[0];
+}
+
+const POSTS_DIR = resolvePostsDir();
+
+function normalizeSlug(value: string): string {
+  return decodeURIComponent(value).normalize('NFC');
+}
 
 function normalizeExcerpt(markdown: string, maxLength = 160): string {
   const text = markdown
@@ -67,18 +83,38 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   try {
-    const fullPath = path.join(POSTS_DIR, `${slug}.md`);
+    const normalized = normalizeSlug(slug);
+    const fullPath = path.join(POSTS_DIR, `${normalized}.md`);
     const content = await fs.readFile(fullPath, 'utf-8');
-    const title = extractTitle(content, slug.replace(/-/g, ' '));
+    const title = extractTitle(content, normalized.replace(/-/g, ' '));
 
     return {
-      slug,
+      slug: normalized,
       title,
       excerpt: normalizeExcerpt(content),
       content,
-      createdAt: extractCreatedAt(`${slug}.md`),
+      createdAt: extractCreatedAt(`${normalized}.md`),
     };
   } catch {
-    return null;
+    try {
+      const files = await fs.readdir(POSTS_DIR);
+      const normalized = normalizeSlug(slug);
+      const matched = files.find((file) => file.replace(/\.md$/, '').normalize('NFC') === normalized);
+      if (!matched) return null;
+
+      const content = await fs.readFile(path.join(POSTS_DIR, matched), 'utf-8');
+      const safeSlug = matched.replace(/\.md$/, '');
+      const title = extractTitle(content, safeSlug.replace(/-/g, ' '));
+
+      return {
+        slug: safeSlug,
+        title,
+        excerpt: normalizeExcerpt(content),
+        content,
+        createdAt: extractCreatedAt(matched),
+      };
+    } catch {
+      return null;
+    }
   }
 }
