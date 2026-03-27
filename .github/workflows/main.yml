@@ -8,6 +8,9 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch: # 이 줄이 있으면 내가 원할 때 수동으로 버튼을 눌러 실행할 수 있습니다.
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest # 가상의 리눅스 서버 대여
@@ -32,3 +35,25 @@ jobs:
         MEDIUM_INTEGRATION_TOKEN: ${{ secrets.MEDIUM_INTEGRATION_TOKEN }}
         AUTHOR_ID: ${{ secrets.AUTHOR_ID }}
       run: python scripts/auto_blog_pipeline.py
+
+    - name: 5. 생성된 마크다운 파일 확인
+      run: |
+        if [ -d "it-guide/src/posts" ]; then
+          echo "📁 생성된 마크다운 파일 목록:"
+          ls -la it-guide/src/posts/
+        else
+          echo "⚠️ posts 폴더가 없습니다."
+        fi
+
+    - name: 6. Git 설정 및 커밋/푸시
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add it-guide/src/posts/*.md || true
+        if git diff-index --quiet HEAD --; then
+          echo "✓ 변경 사항이 없습니다."
+        else
+          git commit -m "🤖 자동 블로그 포스팅: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
+          echo "✅ 변경 사항을 GitHub에 푸시했습니다."
+        fi

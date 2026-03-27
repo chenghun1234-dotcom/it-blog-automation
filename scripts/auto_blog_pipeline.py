@@ -15,6 +15,8 @@ import google.generativeai as genai
 import os
 import sys
 import logging
+from pathlib import Path
+import re
 from datetime import datetime
 
 # UTF-8 인코딩 설정 (Windows 환경)
@@ -34,11 +36,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ==========================================
+# 📁 파일 경로 설정
+# ==========================================
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+NEXTJS_POSTS_DIR = REPO_ROOT / "it-guide" / "src" / "posts"
+NEXTJS_POSTS_DIR.mkdir(parents=True, exist_ok=True)
+
+# ==========================================
 # ⚙️ [설정] API 키 및 토큰 (환경 변수 권장)
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY")
-MEDIUM_INTEGRATION_TOKEN = os.getenv("MEDIUM_TOKEN", "YOUR_MEDIUM_TOKEN")
-AUTHOR_ID = os.getenv("MEDIUM_AUTHOR_ID", "YOUR_MEDIUM_AUTHOR_ID")
+MEDIUM_INTEGRATION_TOKEN = os.getenv("MEDIUM_INTEGRATION_TOKEN") or os.getenv("MEDIUM_TOKEN", "YOUR_MEDIUM_TOKEN")
+AUTHOR_ID = os.getenv("AUTHOR_ID") or os.getenv("MEDIUM_AUTHOR_ID", "YOUR_MEDIUM_AUTHOR_ID")
 
 # Gemini 설정
 if GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
@@ -140,6 +150,34 @@ def rewrite_with_gemini(source_data):
         logger.warning("원본 콘텐츠를 그대로 사용합니다.")
         return source_data['content']
 
+
+def save_markdown_to_nextjs(markdown_content, source_data):
+    """생성된 마크다운을 Next.js 프로젝트 src/posts 폴더에 저장"""
+    try:
+        lines = markdown_content.strip().split('\n')
+        title = lines[0].replace('# ', '').strip() if lines and lines[0].startswith('#') else source_data['title']
+        slug = re.sub(r"[^a-zA-Z0-9가-힣\s-]", "", title).strip().lower()
+        slug = re.sub(r"\s+", "-", slug)
+        if not slug:
+            slug = "auto-post"
+
+        filename = f"{datetime.now().strftime('%Y%m%d')}-{slug[:70]}.md"
+        target_path = NEXTJS_POSTS_DIR / filename
+
+        file_content = (
+            f"{markdown_content}\n\n"
+            f"---\n"
+            f"원문: [{source_data['url']}]({source_data['url']})\n"
+            f"수집일: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        )
+
+        target_path.write_text(file_content, encoding='utf-8')
+        logger.info(f"✅ 마크다운 저장 완료: {target_path}")
+        return str(target_path)
+    except Exception as e:
+        logger.error(f"마크다운 파일 저장 오류: {e}")
+        return None
+
 # ==========================================
 # 🟣 STEP 3: 자동 발행 (Medium API)
 # ==========================================
@@ -221,8 +259,11 @@ def main():
     
     # 2. Gemini로 리라이팅
     new_blog_post = rewrite_with_gemini(source)
+
+    # 3. Next.js 프로젝트 src/posts 폴더에 저장
+    saved_path = save_markdown_to_nextjs(new_blog_post, source)
     
-    # 3. 미디엄에 임시저장으로 퍼블리싱
+    # 4. 미디엄에 임시저장으로 퍼블리싱
     success = publish_to_medium(new_blog_post, source['url'], is_draft=True)
     
     logger.info("=" * 60)
@@ -230,6 +271,8 @@ def main():
         logger.info("✅ 파이프라인 완료!")
     else:
         logger.info("⚠️ 파이프라인 완료 (일부 단계 실패)")
+    if saved_path:
+        logger.info(f"📁 저장 경로: {saved_path}")
     logger.info("=" * 60)
 
 if __name__ == "__main__":

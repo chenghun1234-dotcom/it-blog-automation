@@ -45,6 +45,3 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
-
-# Existing git repo
-it-guide/
