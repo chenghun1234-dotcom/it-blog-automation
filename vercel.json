@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npm --prefix it-guide install",
+  "buildCommand": "npm --prefix it-guide run build",
+  "devCommand": "npm --prefix it-guide run dev"
+}
