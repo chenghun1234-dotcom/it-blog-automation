@@ -14,10 +14,12 @@ export default async function HomePage() {
   const featuredPost = latestPosts[0];
 
   const guides: Guide[] = [
-    { title: "ChatGPT 실무 프롬프트 50선", category: "AI", description: "업무 효율을 2배로 높이는 필수 프롬프트와 템플릿 묶음", href: "/posts" },
-    { title: "Next.js 16 App Router 마스터하기", category: "Development", description: "서버 컴포넌트부터 API 연동까지 실전 예제로 학습", href: "/posts" },
-    { title: "2026년 필수 생산성 앱 베스트 10", category: "App", description: "당신의 시간을 아껴줄 스마트한 도구들과 자동화 팁", href: "/posts" },
-    { title: "연속혈당측정기(CGM) 활용 가이드", category: "Tech&Health", description: "데이터로 관리하는 건강한 식습관과 실사용 인사이트", href: "/posts" },
+    { title: "중소기업을 위한 마케팅 자동화 SaaS 도입 완벽 가이드", category: "SaaS", description: "외산 툴의 한계를 넘어, 한국 스타트업 실정에 맞는 합리적인 자동화 솔루션 세팅 방법", href: "/posts" },
+    { title: "초기 앱 유저 확보(UA)를 위한 AI 기반 광고 네트워크 최적화 전략", category: "AI", description: "1인 개발자도 가능한, AI 타겟팅을 활용한 최신 애드테크(Ad-Tech) 활용법", href: "/posts" },
+    { title: "B2B SaaS 영업팀이 반드시 써야 할 AI 이메일 자동화 도구 5선", category: "SaaS", description: "콜드 메일 응답률을 3배 높인 실무자들의 실전 세팅 노하우 공개", href: "/posts" },
+    { title: "노코드로 구현하는 업무 자동화: Zapier vs Make vs n8n 비교 분석", category: "Automation", description: "각 툴의 가격·연동 범위·학습 곡선을 직접 테스트해 정리한 2026년 최신 버전", href: "/posts" },
+    { title: "AI 글쓰기 도구로 콘텐츠 마케팅 비용 70% 줄이기", category: "AI", description: "ChatGPT·Gemini·Claude를 섞어 쓰는 실무 워크플로우와 품질 관리 체크리스트", href: "/posts" },
+    { title: "2026년 스타트업 필수 테크 스택 총정리", category: "Development", description: "MVP부터 스케일업까지, 비용 최소화·속도 최대화를 동시에 잡는 기술 선택 가이드", href: "/posts" },
   ];
 
   return (
@@ -34,27 +36,30 @@ export default async function HomePage() {
 
       {/* 메인 콘텐츠 영역 (Bento Grid) */}
       <div className="max-w-7xl mx-auto pt-24">
-        <h1 className="text-5xl font-extrabold text-white mb-12 tracking-tighter">
-          지능형 <span className="text-blue-400">IT 가이드</span> 포털
-        </h1>
 
-        <section className="mb-10 rounded-2xl border border-blue-900/50 bg-gradient-to-br from-blue-950/20 to-neutral-900/30 p-6">
-          <h2 className="text-2xl font-bold text-blue-300">AI 자동 블로그 파이프라인</h2>
-          <p className="mt-3 text-neutral-300 leading-7">
-            Dev.to에서 최신 글을 수집하고, Gemini로 한국어 재작성한 뒤, 결과를 마크다운으로 저장해 사이트에 자동 반영합니다.
-            GitHub Actions가 생성 파일을 자동 커밋하여, 배포된 웹사이트에서도 새 글이 바로 보이도록 연결되어 있습니다.
+        {/* 히어로 섹션 */}
+        <div className="mb-12 p-10 rounded-3xl bg-neutral-900 border border-neutral-700">
+          <h1 className="text-4xl font-extrabold text-white mb-6 tracking-tighter">
+            지능형 <span className="text-blue-400">IT 가이드</span> 포털
+          </h1>
+          <p className="text-neutral-400 text-lg max-w-3xl mb-8 leading-8">
+            비즈니스 생산성을 높이는 최신 B2B SaaS 도입 가이드와 AI 활용 핵심 인사이트를 매일 업데이트합니다.<br />
+            글로벌 IT 트렌드의 정수를 실무에 바로 적용 가능한 한국어 인사이트로 선점하세요.
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/posts" className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-400 transition-colors">
-              최신 포스트 보러가기
+          <div className="flex flex-wrap gap-3">
+            <Link href="#guides" className="px-6 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-500 transition-colors">
+              최신 가이드 보기
+            </Link>
+            <Link href="/posts" className="px-6 py-3 border border-neutral-600 text-neutral-200 rounded-full font-bold hover:border-blue-400 hover:text-blue-300 transition-colors">
+              AI 자동 포스트 보기
             </Link>
             {featuredPost ? (
-              <Link href={`/posts/${featuredPost.slug}`} className="rounded-lg border border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-200 hover:border-blue-400 hover:text-blue-300 transition-colors">
-                대표 글 바로 읽기
+              <Link href={`/posts/${featuredPost.slug}`} className="px-6 py-3 border border-neutral-600 text-neutral-200 rounded-full font-bold hover:border-blue-400 hover:text-blue-300 transition-colors">
+                대표 글 읽기
               </Link>
             ) : null}
           </div>
-        </section>
+        </div>
 
         <section id="latest-posts" className="mb-10 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6 scroll-mt-28">
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -67,12 +72,10 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {latestPosts.length === 0 ? (
-            <p className="text-sm text-neutral-400">아직 생성된 포스트가 없습니다. GitHub Actions 실행 후 확인하세요.</p>
-          ) : (
+          {latestPosts.length > 0 && (
             <ul className="space-y-3">
               {latestPosts.map((post) => (
-                <li key={post.slug} className="rounded-lg border border-neutral-800 p-4">
+                <li key={post.slug} className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4 transition hover:border-blue-700">
                   <Link href={`/posts/${post.slug}`} className="block hover:text-blue-300">
                     <p className="font-semibold text-neutral-100">{post.title}</p>
                     <p className="mt-1 text-sm text-neutral-400 leading-6">{post.excerpt}</p>
@@ -84,20 +87,15 @@ export default async function HomePage() {
           )}
         </section>
 
-        {/* Bento Grid layout: md 크기 이상에서 3컬럼 */}
-        <div id="guides" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 scroll-mt-28">
-          {/* 첫 번째 카드는 2개 컬럼을 차지 (강조) */}
-          <div className="md:col-span-2">
-            <GuideCard {...guides[0]} />
-          </div>
-          
-          <GuideCard {...guides[1]} />
-          <GuideCard {...guides[2]} />
-          
-          {/* 마지막 카드는 2개 컬럼을 차지 (강조) */}
-          <div className="md:col-span-2">
-            <GuideCard {...guides[3]} />
-          </div>
+        {/* 가이드 그리드 */}
+        <div className="mb-4 flex items-center justify-between" id="guides">
+          <h2 className="text-2xl font-bold text-white">최신 IT 활용 가이드</h2>
+          <Link href="/posts" className="rounded-full border border-neutral-700 px-4 py-1.5 text-sm text-neutral-300 hover:border-blue-400 hover:text-blue-300 transition-colors">전체 보기</Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 scroll-mt-28 mb-12">
+          {guides.map((guide) => (
+            <GuideCard key={guide.title} {...guide} />
+          ))}
         </div>
       </div>
     </main>
