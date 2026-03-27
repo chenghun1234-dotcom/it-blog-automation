@@ -27,7 +27,7 @@ export default async function PostsPage() {
 
         {posts.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-neutral-700 p-10 text-center text-neutral-400">
-            아직 생성된 포스트가 없습니다. GitHub Actions 실행 후 새로고침하세요.
+            아직 생성된 포스트가 없습니다.
           </div>
         ) : (
           <ul className="space-y-4">
