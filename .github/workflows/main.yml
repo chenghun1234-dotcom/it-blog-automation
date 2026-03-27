@@ -32,6 +32,7 @@ jobs:
     - name: 4. 자동 블로그 스크립트 실행!
       env: # GitHub Secrets에 저장한 키를 불러옵니다.
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
         MEDIUM_INTEGRATION_TOKEN: ${{ secrets.MEDIUM_INTEGRATION_TOKEN }}
         AUTHOR_ID: ${{ secrets.AUTHOR_ID }}
       run: python scripts/auto_blog_pipeline.py

@@ -47,7 +47,7 @@ NEXTJS_POSTS_DIR.mkdir(parents=True, exist_ok=True)
 # ⚙️ [설정] API 키 및 토큰 (환경 변수 권장)
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "models/gemini-2.5-flash"
 MEDIUM_INTEGRATION_TOKEN = os.getenv("MEDIUM_INTEGRATION_TOKEN") or os.getenv("MEDIUM_TOKEN", "YOUR_MEDIUM_TOKEN")
 AUTHOR_ID = os.getenv("AUTHOR_ID") or os.getenv("MEDIUM_AUTHOR_ID", "YOUR_MEDIUM_AUTHOR_ID")
 
