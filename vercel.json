@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "npm --prefix it-guide install",
-  "buildCommand": "npm --prefix it-guide run build",
-  "devCommand": "npm --prefix it-guide run dev"
+  "installCommand": "if [ -f package.json ]; then npm install; else npm --prefix it-guide install; fi",
+  "buildCommand": "if [ -f package.json ]; then npm run build; else npm --prefix it-guide run build; fi",
+  "devCommand": "if [ -f package.json ]; then npm run dev; else npm --prefix it-guide run dev; fi"
 }
