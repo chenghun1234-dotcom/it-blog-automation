@@ -47,6 +47,7 @@ NEXTJS_POSTS_DIR.mkdir(parents=True, exist_ok=True)
 # ⚙️ [설정] API 키 및 토큰 (환경 변수 권장)
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-2.0-flash")
 MEDIUM_INTEGRATION_TOKEN = os.getenv("MEDIUM_INTEGRATION_TOKEN") or os.getenv("MEDIUM_TOKEN", "YOUR_MEDIUM_TOKEN")
 AUTHOR_ID = os.getenv("AUTHOR_ID") or os.getenv("MEDIUM_AUTHOR_ID", "YOUR_MEDIUM_AUTHOR_ID")
 
@@ -138,8 +139,8 @@ def rewrite_with_gemini(source_data):
     user_prompt = f"원본 제목: {source_data['title']}\n원본 저자: {source_data['author']}\n\n원본 내용:\n{source_data['content']}"
     
     try:
-        # Gemini 1.5 Flash 모델 사용 (텍스트 처리 속도와 가성비가 가장 좋음)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # 최신 지원 모델 사용 (환경변수 GEMINI_MODEL로 재정의 가능)
+        model = genai.GenerativeModel(GEMINI_MODEL)
         response = model.generate_content(system_prompt + "\n\n" + user_prompt)
         
         logger.info("✓ AI 재작성 완료!")
@@ -147,6 +148,10 @@ def rewrite_with_gemini(source_data):
         
     except Exception as e:
         logger.error(f"Gemini AI 처리 오류: {e}")
+        if "quota" in str(e).lower() or "429" in str(e):
+            logger.error("Gemini API 할당량(Quota) 초과 상태입니다. 결제/쿼터 설정 또는 잠시 후 재시도하세요.")
+        if "not found" in str(e).lower() or "404" in str(e):
+            logger.error("지정한 Gemini 모델명이 유효하지 않습니다. GEMINI_MODEL 환경변수를 확인하세요.")
         logger.warning("원본 콘텐츠를 그대로 사용합니다.")
         return source_data['content']
 
