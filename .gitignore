@@ -23,6 +23,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Allow Next.js source lib folder
+!it-guide/lib/
+!it-guide/lib/**
+
 # Node.js
 node_modules/
 .next/
