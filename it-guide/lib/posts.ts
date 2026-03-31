@@ -15,13 +15,17 @@ function resolvePostsDir(): string {
   const candidates = [
     path.join(cwd, 'src', 'posts'),
     path.join(cwd, 'it-guide', 'src', 'posts'),
+    path.resolve(__dirname, '..', 'src', 'posts'),
+    path.resolve(__dirname, '..', '..', 'src', 'posts'),
   ];
 
   const found = candidates.find((dir) => existsSync(dir));
   return found ?? candidates[0];
 }
 
-const POSTS_DIR = resolvePostsDir();
+function getPostsDir(): string {
+  return resolvePostsDir();
+}
 
 function normalizeSlug(value: string): string {
   return decodeURIComponent(value).normalize('NFC');
@@ -53,6 +57,7 @@ function extractCreatedAt(fileName: string): string {
 }
 
 export async function getAllPosts(): Promise<BlogPost[]> {
+  const POSTS_DIR = getPostsDir();
   try {
     await fs.mkdir(POSTS_DIR, { recursive: true });
     const files = await fs.readdir(POSTS_DIR);
@@ -82,6 +87,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+  const POSTS_DIR = getPostsDir();
   try {
     const normalized = normalizeSlug(slug);
     const fullPath = path.join(POSTS_DIR, `${normalized}.md`);
@@ -97,12 +103,12 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
     };
   } catch {
     try {
-      const files = await fs.readdir(POSTS_DIR);
+      const files = await fs.readdir(getPostsDir());
       const normalized = normalizeSlug(slug);
       const matched = files.find((file) => file.replace(/\.md$/, '').normalize('NFC') === normalized);
       if (!matched) return null;
 
-      const content = await fs.readFile(path.join(POSTS_DIR, matched), 'utf-8');
+      const content = await fs.readFile(path.join(getPostsDir(), matched), 'utf-8');
       const safeSlug = matched.replace(/\.md$/, '');
       const title = extractTitle(content, safeSlug.replace(/-/g, ' '));
 
