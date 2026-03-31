@@ -18,6 +18,7 @@ import logging
 from pathlib import Path
 import re
 from datetime import datetime
+from typing import Optional
 
 # UTF-8 인코딩 설정 (Windows 환경)
 try:
@@ -42,6 +43,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 NEXTJS_POSTS_DIR = REPO_ROOT / "it-guide" / "src" / "posts"
 NEXTJS_POSTS_DIR.mkdir(parents=True, exist_ok=True)
+logger.info(f"📂 POSTS_DIR={NEXTJS_POSTS_DIR}")
 
 # ==========================================
 # ⚙️ [설정] API 키 및 토큰 (환경 변수 권장)
@@ -50,6 +52,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "models/gemini-2.5-flash"
 MEDIUM_INTEGRATION_TOKEN = os.getenv("MEDIUM_INTEGRATION_TOKEN") or os.getenv("MEDIUM_TOKEN", "YOUR_MEDIUM_TOKEN")
 AUTHOR_ID = os.getenv("AUTHOR_ID") or os.getenv("MEDIUM_AUTHOR_ID", "YOUR_MEDIUM_AUTHOR_ID")
+DEVTO_TAGS = [tag.strip() for tag in (os.getenv("DEVTO_TAGS") or "webdev,javascript,programming,saas").split(",") if tag.strip()]
 
 # Gemini 설정
 if GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
@@ -75,10 +78,12 @@ def fetch_devto_source(tag="saas", limit=1):
     logger.info(f"[{tag}] 태그의 최신 아티클을 Dev.to에서 검색합니다...")
     
     try:
-        url = f"https://dev.to/api/articles?tag={tag}&per_page={limit}&state=fresh"
+        url = f"https://dev.to/api/articles?tag={tag}&per_page={limit}"
+        logger.info(f"Dev.to 목록 API 호출: {url}")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         articles = response.json()
+        logger.info(f"Dev.to 목록 응답 개수: {len(articles)}")
         
         if not articles:
             logger.warning("가져올 글이 없습니다.")
@@ -86,6 +91,7 @@ def fetch_devto_source(tag="saas", limit=1):
         
         article_id = articles[0]['id']
         detail_url = f"https://dev.to/api/articles/{article_id}"
+        logger.info(f"Dev.to 상세 API 호출: {detail_url}")
         article_data = requests.get(detail_url, timeout=10).json()
         
         source_data = {
@@ -102,6 +108,17 @@ def fetch_devto_source(tag="saas", limit=1):
     except Exception as e:
         logger.error(f"Dev.to 데이터 수집 오류: {e}")
         return None
+
+
+def fetch_devto_with_fallback(tags: list[str], limit: int = 1) -> Optional[dict]:
+    """여러 태그를 순차 시도하여 수집 성공 확률을 높입니다."""
+    for tag in tags:
+        source = fetch_devto_source(tag=tag, limit=limit)
+        if source:
+            logger.info(f"선택된 태그: {tag}")
+            return source
+    logger.error(f"모든 태그 수집 실패: {tags}")
+    return None
 
 # ==========================================
 # 🔵 STEP 2: AI 가공 (Gemini API - 프롬프트 엔지니어링)
@@ -123,6 +140,7 @@ def rewrite_with_gemini(source_data):
         return source_data['content']
     
     logger.info("Gemini가 블로그 포스팅을 재작성 중입니다 (AI 감지 회피 모드)...")
+    logger.info(f"Gemini 모델: {GEMINI_MODEL}")
     
     # 2026년형 미디엄 맞춤형 회피 프롬프트
     system_prompt = """
@@ -166,7 +184,7 @@ def save_markdown_to_nextjs(markdown_content, source_data):
         if not slug:
             slug = "auto-post"
 
-        filename = f"{datetime.now().strftime('%Y%m%d')}-{slug[:70]}.md"
+        filename = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{slug[:70]}.md"
         target_path = NEXTJS_POSTS_DIR / filename
 
         file_content = (
@@ -178,6 +196,7 @@ def save_markdown_to_nextjs(markdown_content, source_data):
 
         target_path.write_text(file_content, encoding='utf-8')
         logger.info(f"✅ 마크다운 저장 완료: {target_path}")
+        logger.info(f"저장 파일 크기(bytes): {target_path.stat().st_size}")
         return str(target_path)
     except Exception as e:
         logger.error(f"마크다운 파일 저장 오류: {e}")
@@ -255,18 +274,23 @@ def main():
     logger.info("🚀 블로그 자동화 파이프라인 시작")
     logger.info("=" * 60)
     
-    # 1. Dev.to에서 'webdev' (웹개발) 관련 최신 글 1개 가져오기
-    source = fetch_devto_source(tag="webdev", limit=1)
+    logger.info(f"수집 태그 후보: {DEVTO_TAGS}")
+
+    # 1. Dev.to 다중 태그 fallback 수집
+    source = fetch_devto_with_fallback(tags=DEVTO_TAGS, limit=1)
     
     if not source:
         logger.error("데이터 수집 실패. 파이프라인을 중단합니다.")
-        return
+        sys.exit(2)
     
     # 2. Gemini로 리라이팅
     new_blog_post = rewrite_with_gemini(source)
 
     # 3. Next.js 프로젝트 src/posts 폴더에 저장
     saved_path = save_markdown_to_nextjs(new_blog_post, source)
+    if not saved_path:
+        logger.error("마크다운 저장 실패. 파이프라인을 중단합니다.")
+        sys.exit(3)
     
     # 4. 미디엄에 임시저장으로 퍼블리싱
     success = publish_to_medium(new_blog_post, source['url'], is_draft=True)
@@ -278,6 +302,7 @@ def main():
         logger.info("⚠️ 파이프라인 완료 (일부 단계 실패)")
     if saved_path:
         logger.info(f"📁 저장 경로: {saved_path}")
+    logger.info(f"요약: fetched={bool(source)} saved={bool(saved_path)} medium_success={bool(success)}")
     logger.info("=" * 60)
 
 if __name__ == "__main__":
