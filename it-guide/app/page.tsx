@@ -1,5 +1,6 @@
 import GuideCard from '@/components/GuideCard';
 import Link from 'next/link';
+import Script from 'next/script';
 import { getAllPosts } from '@/lib/posts';
 
 interface Guide {
@@ -85,6 +86,22 @@ export default async function HomePage() {
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="mb-10 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+          <h2 className="mb-3 text-lg font-semibold text-neutral-200">광고</h2>
+          <ins
+            className="kakao_ad_area"
+            style={{ display: 'none' }}
+            data-ad-unit="DAN-3OO9OnWsuDXU40HA"
+            data-ad-width="320"
+            data-ad-height="50"
+          />
+          <Script
+            src="https://t1.daumcdn.net/kas/static/ba.min.js"
+            strategy="afterInteractive"
+            async
+          />
         </section>
 
         {/* 가이드 그리드 */}
