@@ -1,0 +1,2 @@
+# Ignore Python automation scripts from Vercel build context
+scripts/
